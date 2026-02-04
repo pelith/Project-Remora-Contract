@@ -138,7 +138,11 @@ contract MockPermit2 {
     }
 
     function approve(address token, address spender, uint160 amount, uint48 expiration) external {
-        allowances[msg.sender][token][spender] = AllowanceData({amount: amount, expiration: expiration, nonce: 0});
+        allowances[msg.sender][token][spender] = AllowanceData({
+            amount: amount,
+            expiration: expiration,
+            nonce: 0
+        });
     }
 
     function allowance(address user, address token, address spender)
@@ -510,11 +514,19 @@ contract V4AgenticVaultTest is Test {
         uint48 expiration = uint48(block.timestamp + 1 days);
 
         vm.prank(owner);
-        vault.approveTokenWithPermit2(Currency.wrap(address(token0)), address(posm), amount, expiration);
+        vault.approveTokenWithPermit2(
+            Currency.wrap(address(token0)),
+            address(posm),
+            amount,
+            expiration
+        );
 
         // Check permit2 allowance was set
-        (uint160 allowedAmount, uint48 allowedExpiration,) =
-            permit2.allowance(address(vault), address(token0), address(posm));
+        (uint160 allowedAmount, uint48 allowedExpiration,) = permit2.allowance(
+            address(vault),
+            address(token0),
+            address(posm)
+        );
         assertEq(allowedAmount, amount);
         assertEq(allowedExpiration, expiration);
 
@@ -527,9 +539,18 @@ contract V4AgenticVaultTest is Test {
         uint48 expiration = uint48(block.timestamp + 1 days);
 
         vm.prank(owner);
-        vault.approveTokenWithPermit2(Currency.wrap(address(token0)), address(universalRouter), amount, expiration);
+        vault.approveTokenWithPermit2(
+            Currency.wrap(address(token0)),
+            address(universalRouter),
+            amount,
+            expiration
+        );
 
-        (uint160 allowedAmount,,) = permit2.allowance(address(vault), address(token0), address(universalRouter));
+        (uint160 allowedAmount,,) = permit2.allowance(
+            address(vault),
+            address(token0),
+            address(universalRouter)
+        );
         assertEq(allowedAmount, amount);
     }
 
@@ -537,7 +558,10 @@ contract V4AgenticVaultTest is Test {
         vm.prank(owner);
         vm.expectRevert("spender not allowed");
         vault.approveTokenWithPermit2(
-            Currency.wrap(address(token0)), user, type(uint160).max, uint48(block.timestamp + 1 days)
+            Currency.wrap(address(token0)),
+            user,
+            type(uint160).max,
+            uint48(block.timestamp + 1 days)
         );
     }
 
@@ -545,7 +569,10 @@ contract V4AgenticVaultTest is Test {
         vm.prank(owner);
         vm.expectRevert("native ETH no permit2");
         vault.approveTokenWithPermit2(
-            Currency.wrap(address(0)), address(posm), type(uint160).max, uint48(block.timestamp + 1 days)
+            Currency.wrap(address(0)),
+            address(posm),
+            type(uint160).max,
+            uint48(block.timestamp + 1 days)
         );
     }
 
@@ -553,7 +580,10 @@ contract V4AgenticVaultTest is Test {
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user));
         vault.approveTokenWithPermit2(
-            Currency.wrap(address(token0)), address(posm), type(uint160).max, uint48(block.timestamp + 1 days)
+            Currency.wrap(address(token0)),
+            address(posm),
+            type(uint160).max,
+            uint48(block.timestamp + 1 days)
         );
     }
 
@@ -669,7 +699,14 @@ contract V4AgenticVaultTest is Test {
         emit PositionAdded(expectedTokenId, tickLower, tickUpper);
 
         vm.prank(agent);
-        uint256 tokenId = vault.mintPosition(tickLower, tickUpper, liquidity, amount0Max, amount1Max, deadline);
+        uint256 tokenId = vault.mintPosition(
+            tickLower,
+            tickUpper,
+            liquidity,
+            amount0Max,
+            amount1Max,
+            deadline
+        );
 
         assertEq(tokenId, expectedTokenId);
         assertTrue(vault.isManagedPosition(tokenId));
@@ -706,7 +743,14 @@ contract V4AgenticVaultTest is Test {
         vm.deal(address(ethVault), 100 ether);
 
         vm.prank(agent);
-        uint256 tokenId = ethVault.mintPosition(-600, 600, 1000e18, 10e18, 10e18, block.timestamp + 1 hours);
+        uint256 tokenId = ethVault.mintPosition(
+            -600,
+            600,
+            1000e18,
+            10e18,
+            10e18,
+            block.timestamp + 1 hours
+        );
 
         assertTrue(ethVault.isManagedPosition(tokenId));
         // Check that value was sent to posm
@@ -796,7 +840,13 @@ contract V4AgenticVaultTest is Test {
         uint256 tokenId = _mintTestPosition(-600, 600);
 
         vm.prank(agent);
-        vault.increaseLiquidity(tokenId, 500e18, 50e18, 50e18, block.timestamp + 1 hours);
+        vault.increaseLiquidity(
+            tokenId,
+            500e18,
+            50e18,
+            50e18,
+            block.timestamp + 1 hours
+        );
 
         // Verify posm was called
         assertEq(posm.lastDeadline(), block.timestamp + 1 hours);
@@ -829,11 +879,19 @@ contract V4AgenticVaultTest is Test {
 
         // Mint position first
         vm.prank(agent);
-        uint256 tokenId = ethVault.mintPosition(-600, 600, 1000e18, 10e18, 10e18, block.timestamp + 1 hours);
+        uint256 tokenId = ethVault.mintPosition(
+            -600, 600, 1000e18, 10e18, 10e18, block.timestamp + 1 hours
+        );
 
         // Increase liquidity
         vm.prank(agent);
-        ethVault.increaseLiquidity(tokenId, 500e18, 5e18, 5e18, block.timestamp + 1 hours);
+        ethVault.increaseLiquidity(
+            tokenId,
+            500e18,
+            5e18,
+            5e18,
+            block.timestamp + 1 hours
+        );
 
         // Check ETH was sent
         assertEq(posm.lastValue(), 5e18);
@@ -886,7 +944,13 @@ contract V4AgenticVaultTest is Test {
         uint256 tokenId = _mintTestPosition(-600, 600);
 
         vm.prank(agent);
-        vault.decreaseLiquidityToVault(tokenId, 500e18, 10e18, 10e18, block.timestamp + 1 hours);
+        vault.decreaseLiquidityToVault(
+            tokenId,
+            500e18,
+            10e18,
+            10e18,
+            block.timestamp + 1 hours
+        );
 
         // Position should still exist
         assertTrue(vault.isManagedPosition(tokenId));
@@ -902,7 +966,13 @@ contract V4AgenticVaultTest is Test {
 
         // Decrease should still work even though position is out of bounds
         vm.prank(agent);
-        vault.decreaseLiquidityToVault(tokenId, 500e18, 10e18, 10e18, block.timestamp + 1 hours);
+        vault.decreaseLiquidityToVault(
+            tokenId,
+            500e18,
+            10e18,
+            10e18,
+            block.timestamp + 1 hours
+        );
 
         assertTrue(vault.isManagedPosition(tokenId));
     }
@@ -940,7 +1010,12 @@ contract V4AgenticVaultTest is Test {
         uint256 tokenId = _mintTestPosition(-600, 600);
 
         vm.prank(agent);
-        vault.collectFeesToVault(tokenId, 0, 0, block.timestamp + 1 hours);
+        vault.collectFeesToVault(
+            tokenId,
+            0,
+            0,
+            block.timestamp + 1 hours
+        );
 
         assertTrue(vault.isManagedPosition(tokenId));
         assertEq(posm.lastDeadline(), block.timestamp + 1 hours);
@@ -954,7 +1029,12 @@ contract V4AgenticVaultTest is Test {
 
         // Collect should work even though position is out of bounds
         vm.prank(agent);
-        vault.collectFeesToVault(tokenId, 0, 0, block.timestamp + 1 hours);
+        vault.collectFeesToVault(
+            tokenId,
+            0,
+            0,
+            block.timestamp + 1 hours
+        );
 
         assertTrue(vault.isManagedPosition(tokenId));
     }
@@ -995,7 +1075,12 @@ contract V4AgenticVaultTest is Test {
         emit PositionRemoved(tokenId);
 
         vm.prank(agent);
-        vault.burnPositionToVault(tokenId, 0, 0, block.timestamp + 1 hours);
+        vault.burnPositionToVault(
+            tokenId,
+            0,
+            0,
+            block.timestamp + 1 hours
+        );
 
         assertFalse(vault.isManagedPosition(tokenId));
         assertEq(vault.positionsLength(), 0);
@@ -1009,7 +1094,12 @@ contract V4AgenticVaultTest is Test {
 
         // Burn should work even though position is out of bounds
         vm.prank(agent);
-        vault.burnPositionToVault(tokenId, 0, 0, block.timestamp + 1 hours);
+        vault.burnPositionToVault(
+            tokenId,
+            0,
+            0,
+            block.timestamp + 1 hours
+        );
 
         assertFalse(vault.isManagedPosition(tokenId));
     }
@@ -1397,7 +1487,12 @@ contract V4AgenticVaultTest is Test {
         universalRouter.setSwapOutputAmount(minAmountOut);
 
         vm.prank(agent);
-        uint256 amountOut = vault.swapExactInputSingle(true, amountIn, minAmountOut, block.timestamp + 1 hours);
+        uint256 amountOut = vault.swapExactInputSingle(
+            true,
+            amountIn,
+            minAmountOut,
+            block.timestamp + 1 hours
+        );
 
         assertEq(amountOut, minAmountOut);
     }
@@ -1437,7 +1532,7 @@ contract V4AgenticVaultTest is Test {
         vm.prank(agent);
         uint256 tokenId = vault.mintPosition(
             -600, // exactly at allowedTickLower
-            600, // exactly at allowedTickUpper
+            600,  // exactly at allowedTickUpper
             1000e18,
             100e18,
             100e18,
@@ -1453,7 +1548,9 @@ contract V4AgenticVaultTest is Test {
         vault.setAllowedTickRange(-600, 600);
 
         vm.prank(agent);
-        uint256 tokenId = vault.mintPosition(-600, 600, 1000e18, 100e18, 100e18, block.timestamp + 1 hours);
+        uint256 tokenId = vault.mintPosition(
+            -600, 600, 1000e18, 100e18, 100e18, block.timestamp + 1 hours
+        );
 
         // Narrow bounds but position is still valid at exact edges
         vm.prank(owner);
@@ -1467,7 +1564,9 @@ contract V4AgenticVaultTest is Test {
     function test_IncreaseLiquidity_PositionLowerTickOutOfBounds() public {
         // Mint position
         vm.prank(agent);
-        uint256 tokenId = vault.mintPosition(-1200, 600, 1000e18, 100e18, 100e18, block.timestamp + 1 hours);
+        uint256 tokenId = vault.mintPosition(
+            -1200, 600, 1000e18, 100e18, 100e18, block.timestamp + 1 hours
+        );
 
         // Update bounds so only lower tick is out
         vm.prank(owner);
@@ -1482,7 +1581,9 @@ contract V4AgenticVaultTest is Test {
     function test_IncreaseLiquidity_PositionUpperTickOutOfBounds() public {
         // Mint position
         vm.prank(agent);
-        uint256 tokenId = vault.mintPosition(-600, 1200, 1000e18, 100e18, 100e18, block.timestamp + 1 hours);
+        uint256 tokenId = vault.mintPosition(
+            -600, 1200, 1000e18, 100e18, 100e18, block.timestamp + 1 hours
+        );
 
         // Update bounds so only upper tick is out
         vm.prank(owner);
@@ -1648,8 +1749,8 @@ contract V4AgenticVaultTest is Test {
 
     function test_TickRangeUpdateDuringActivePositions() public {
         // Create positions at different ranges
-        uint256 pos1 = _mintTestPosition(-600, 600); // narrow
-        uint256 pos2 = _mintTestPosition(-6000, 6000); // wide
+        uint256 pos1 = _mintTestPosition(-600, 600);    // narrow
+        uint256 pos2 = _mintTestPosition(-6000, 6000);  // wide
 
         // Update allowed range to exclude pos2
         vm.prank(owner);
@@ -1677,7 +1778,12 @@ contract V4AgenticVaultTest is Test {
 
         // Swap some tokens
         vm.prank(agent);
-        uint256 swapOut = vault.swapExactInputSingle(true, 100e18, 90e18, block.timestamp + 1 hours);
+        uint256 swapOut = vault.swapExactInputSingle(
+            true,
+            100e18,
+            90e18,
+            block.timestamp + 1 hours
+        );
         assertGe(swapOut, 90e18);
 
         // Then mint a position
@@ -1701,7 +1807,14 @@ contract V4AgenticVaultTest is Test {
 
     function _mintTestPosition(int24 tickLower, int24 tickUpper) internal returns (uint256 tokenId) {
         vm.prank(agent);
-        tokenId = vault.mintPosition(tickLower, tickUpper, 1000e18, 100e18, 100e18, block.timestamp + 1 hours);
+        tokenId = vault.mintPosition(
+            tickLower,
+            tickUpper,
+            1000e18,
+            100e18,
+            100e18,
+            block.timestamp + 1 hours
+        );
     }
 }
 

@@ -140,10 +140,16 @@ contract V4AgenticVaultForkTest is Test {
         // Owner approves tokens via Permit2 for PositionManager
         vm.startPrank(owner);
         vault.approveTokenWithPermit2(
-            Currency.wrap(USDC), address(posm), type(uint160).max, uint48(block.timestamp + 365 days)
+            Currency.wrap(USDC),
+            address(posm),
+            type(uint160).max,
+            uint48(block.timestamp + 365 days)
         );
         vault.approveTokenWithPermit2(
-            Currency.wrap(USDC), address(universalRouter), type(uint160).max, uint48(block.timestamp + 365 days)
+            Currency.wrap(USDC),
+            address(universalRouter),
+            type(uint160).max,
+            uint48(block.timestamp + 365 days)
         );
         vm.stopPrank();
 
@@ -214,7 +220,14 @@ contract V4AgenticVaultForkTest is Test {
         uint256 usdcBefore = usdc.balanceOf(address(vault));
 
         vm.prank(agent);
-        uint256 tokenId = vault.mintPosition(tickLower, tickUpper, liquidity, amount0Max, amount1Max, deadline);
+        uint256 tokenId = vault.mintPosition(
+            tickLower,
+            tickUpper,
+            liquidity,
+            amount0Max,
+            amount1Max,
+            deadline
+        );
 
         console2.log("Minted position tokenId:", tokenId);
         console2.log("ETH spent:", ethBefore - address(vault).balance);
@@ -233,8 +246,14 @@ contract V4AgenticVaultForkTest is Test {
 
         // Mint initial position
         vm.prank(agent);
-        uint256 tokenId =
-            vault.mintPosition(tickLower, tickUpper, 1e15, 10 ether, 30000 * 1e6, block.timestamp + 1 hours);
+        uint256 tokenId = vault.mintPosition(
+            tickLower,
+            tickUpper,
+            1e15,
+            10 ether,
+            30000 * 1e6,
+            block.timestamp + 1 hours
+        );
 
         console2.log("Initial position minted:", tokenId);
 
@@ -265,8 +284,14 @@ contract V4AgenticVaultForkTest is Test {
 
         // Mint position
         vm.prank(agent);
-        uint256 tokenId =
-            vault.mintPosition(tickLower, tickUpper, 1e15, 10 ether, 30000 * 1e6, block.timestamp + 1 hours);
+        uint256 tokenId = vault.mintPosition(
+            tickLower,
+            tickUpper,
+            1e15,
+            10 ether,
+            30000 * 1e6,
+            block.timestamp + 1 hours
+        );
 
         uint256 ethBefore = address(vault).balance;
         uint256 usdcBefore = usdc.balanceOf(address(vault));
@@ -295,8 +320,14 @@ contract V4AgenticVaultForkTest is Test {
 
         // Mint position
         vm.prank(agent);
-        uint256 tokenId =
-            vault.mintPosition(tickLower, tickUpper, 1e15, 10 ether, 30000 * 1e6, block.timestamp + 1 hours);
+        uint256 tokenId = vault.mintPosition(
+            tickLower,
+            tickUpper,
+            1e15,
+            10 ether,
+            30000 * 1e6,
+            block.timestamp + 1 hours
+        );
 
         assertEq(vault.positionsLength(), 1);
 
@@ -383,20 +414,37 @@ contract V4AgenticVaultForkTest is Test {
         // 1. Mint position
         console2.log("1. Minting position...");
         vm.prank(agent);
-        uint256 tokenId =
-            vault.mintPosition(tickLower, tickUpper, 1e15, 10 ether, 30000 * 1e6, block.timestamp + 1 hours);
+        uint256 tokenId = vault.mintPosition(
+            tickLower,
+            tickUpper,
+            1e15,
+            10 ether,
+            30000 * 1e6,
+            block.timestamp + 1 hours
+        );
         console2.log("   Position minted:", tokenId);
 
         // 2. Increase liquidity
         console2.log("2. Increasing liquidity...");
         vm.prank(agent);
-        vault.increaseLiquidity(tokenId, 0.5e15, 5 ether, 15000 * 1e6, block.timestamp + 1 hours);
+        vault.increaseLiquidity(
+            tokenId,
+            0.5e15,
+            5 ether,
+            15000 * 1e6,
+            block.timestamp + 1 hours
+        );
         console2.log("   Liquidity increased");
 
         // 3. Perform a swap to generate fees
         console2.log("3. Performing swap to generate fees...");
         vm.prank(agent);
-        vault.swapExactInputSingle(true, 0.5 ether, 0, block.timestamp + 1 hours);
+        vault.swapExactInputSingle(
+            true,
+            0.5 ether,
+            0,
+            block.timestamp + 1 hours
+        );
         console2.log("   Swap completed");
 
         // 4. Collect fees
@@ -405,7 +453,12 @@ contract V4AgenticVaultForkTest is Test {
         uint256 usdcBefore = usdc.balanceOf(address(vault));
 
         vm.prank(agent);
-        vault.collectFeesToVault(tokenId, 0, 0, block.timestamp + 1 hours);
+        vault.collectFeesToVault(
+            tokenId,
+            0,
+            0,
+            block.timestamp + 1 hours
+        );
 
         console2.log("   ETH fees:", address(vault).balance - ethBefore);
         console2.log("   USDC fees:", usdc.balanceOf(address(vault)) - usdcBefore);
@@ -413,13 +466,24 @@ contract V4AgenticVaultForkTest is Test {
         // 5. Decrease liquidity
         console2.log("5. Decreasing liquidity...");
         vm.prank(agent);
-        vault.decreaseLiquidityToVault(tokenId, 0.5e15, 0, 0, block.timestamp + 1 hours);
+        vault.decreaseLiquidityToVault(
+            tokenId,
+            0.5e15,
+            0,
+            0,
+            block.timestamp + 1 hours
+        );
         console2.log("   Liquidity decreased");
 
         // 6. Burn position
         console2.log("6. Burning position...");
         vm.prank(agent);
-        vault.burnPositionToVault(tokenId, 0, 0, block.timestamp + 1 hours);
+        vault.burnPositionToVault(
+            tokenId,
+            0,
+            0,
+            block.timestamp + 1 hours
+        );
         console2.log("   Position burned");
 
         assertEq(vault.positionsLength(), 0);
@@ -463,15 +527,22 @@ contract V4AgenticVaultForkTest is Test {
         vm.startPrank(agent);
 
         // Mint 3 positions at different ranges
-        uint256 tokenId1 =
-            vault.mintPosition(tickLower, tickUpper, 0.5e15, 10 ether, 30000 * 1e6, block.timestamp + 1 hours);
+        uint256 tokenId1 = vault.mintPosition(
+            tickLower, tickUpper,
+            0.5e15, 10 ether, 30000 * 1e6,
+            block.timestamp + 1 hours
+        );
 
         uint256 tokenId2 = vault.mintPosition(
-            tickLower - 600, tickUpper + 600, 0.5e15, 10 ether, 30000 * 1e6, block.timestamp + 1 hours
+            tickLower - 600, tickUpper + 600,
+            0.5e15, 10 ether, 30000 * 1e6,
+            block.timestamp + 1 hours
         );
 
         uint256 tokenId3 = vault.mintPosition(
-            tickLower - 1200, tickUpper + 1200, 0.5e15, 10 ether, 30000 * 1e6, block.timestamp + 1 hours
+            tickLower - 1200, tickUpper + 1200,
+            0.5e15, 10 ether, 30000 * 1e6,
+            block.timestamp + 1 hours
         );
 
         vm.stopPrank();
