@@ -68,7 +68,14 @@
 ## 4. Primary User Flows (User Stories)
 
 ### 4.1 Create a Vault
-- The user (or a Factory) deploys a Vault and sets `poolKey`, `agent`, `K`, and initial tick boundaries and `swapAllowed`.
+- The user calls `Factory.createVault()` with:
+  - `poolKey` - the target Uniswap v4 pool
+  - `agent` - address authorized to manage positions
+  - `allowedTickLower` / `allowedTickUpper` - initial tick boundaries
+  - `swapAllowed` - whether agent can perform swaps
+  - `maxPositionsK` - max positions (0 = unlimited)
+- The Factory deploys a new V4AgenticVault via CREATE2 with the user as owner
+- The vault address can be pre-computed using `Factory.getVault()`
 
 ### 4.2 Fund the Vault (no deposit API)
 - Users transfer ERC20 tokens directly into the Vault (`transfer`), or use an external flow that calls `transferFrom`; the Vault provides no deposit function.
@@ -137,10 +144,36 @@ Based on the strategy output, the Agent may execute a transaction sequence such 
   - requires `minAmountOut` + `deadline`
   - `swapAllowed` must be true
 
-### 5.2 Factory (optional)
-- Recommended:
-  - CREATE2 deterministic addresses (better indexing and UX)
-  - `vaultCreated` event (off-chain tracking)
+### 5.2 Factory
+Deploys and tracks V4AgenticVault instances for users.
+
+#### State
+- immutable:
+  - `posm` (PositionManager)
+  - `universalRouter`
+  - `permit2`
+- tracking:
+  - `vaults[]` - array of all created vault addresses
+  - `vaultsCreatedBy[creator][]` - vaults created by each address
+  - `isVault[address]` - quick lookup for valid vaults
+
+#### Functions
+- `createVault(poolKey, agent, allowedTickLower, allowedTickUpper, swapAllowed, maxPositionsK)` → returns vault address
+  - Deploys a new V4AgenticVault with `msg.sender` as owner
+  - Uses CREATE2 with salt derived from `(msg.sender, poolKey, nonce)` for deterministic addresses
+  - Emits `VaultCreated` event
+- `computeVaultAddress(creator, poolKey, nonce)` → computes vault address without deployment (for UX)
+- `getVaultsCreatedBy(creator)` → returns array of vault addresses created by an address
+- `getAllVaults()` → returns all created vaults
+
+#### Events
+- `VaultCreated(address indexed owner, address indexed vault, PoolKey poolKey, address agent)`
+
+#### Design Rationale
+- **CREATE2**: Enables deterministic addresses for better indexing, pre-computation, and UX
+- **Centralized protocol addresses**: Factory holds immutable references to PositionManager, UniversalRouter, and Permit2 so users don't need to specify them
+- **Registry**: On-chain tracking enables enumeration and validation of legitimate vaults
+- **Permissionless**: Anyone can create a vault for themselves (no allowlist)
 
 ---
 
