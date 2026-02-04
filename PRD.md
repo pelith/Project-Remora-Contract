@@ -29,15 +29,15 @@
 | Parameter | Description |
 |---|---|
 | `poolKey` | The target v4 pool the Vault may provide liquidity to (currency0/currency1/fee/tickSpacing, etc.) |
-| `agent` | The Agent address authorized to operate this Vault |
-| `K` | Max number of positions the Agent may manage/create; `K = 0` means unlimited |
 
 ### 2.2 Adjustable after deployment (updated by Owner; applies to actions **after** the update)
 | Parameter | Description |
 |---|---|
+| `agent` | The Agent address authorized to operate this Vault |
+| `K` | Max number of positions the Agent may manage/create; `K = 0` means unlimited |
 | `allowedTickLower` / `allowedTickUpper` | The tick range in which the Agent may add/increase liquidity (applies to **mint / increase**) |
 | `swapAllowed` | Whether the Agent is allowed to swap for rebalancing |
-| `agentPaused` | Whether the Agent’s access is paused |
+| `agentPaused` | Whether the Agent's access is paused |
 
 > Semantics of updating the tick boundaries:  
 > - After updating the tick boundary, the Agent **must not** mintPosition / increaseLiquidity outside the new boundary.  
