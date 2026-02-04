@@ -156,12 +156,10 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
 
     /// @notice Set Permit2 allowance for a spender (PositionManager or UniversalRouter).
     /// @dev Must also approve the Permit2 contract at the ERC20 level first.
-    function approveTokenWithPermit2(
-        Currency currency,
-        address spender,
-        uint160 amount,
-        uint48 expiration
-    ) external onlyOwner {
+    function approveTokenWithPermit2(Currency currency, address spender, uint160 amount, uint48 expiration)
+        external
+        onlyOwner
+    {
         require(spender == address(posm) || spender == address(universalRouter), "spender not allowed");
         require(!currency.isAddressZero(), "native ETH no permit2");
 
@@ -221,33 +219,19 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
 
         if (useNativeETH) {
             // MINT_POSITION + SETTLE_PAIR + CLEAR_OR_TAKE (refund excess ETH)
-            actions = abi.encodePacked(
-                uint8(Actions.MINT_POSITION),
-                uint8(Actions.SETTLE_PAIR),
-                uint8(Actions.CLEAR_OR_TAKE)
-            );
+            actions =
+                abi.encodePacked(uint8(Actions.MINT_POSITION), uint8(Actions.SETTLE_PAIR), uint8(Actions.CLEAR_OR_TAKE));
             params = new bytes[](3);
             params[2] = abi.encode(currency0, uint256(0)); // take any excess ETH
         } else {
             // MINT_POSITION + SETTLE_PAIR
-            actions = abi.encodePacked(
-                uint8(Actions.MINT_POSITION),
-                uint8(Actions.SETTLE_PAIR)
-            );
+            actions = abi.encodePacked(uint8(Actions.MINT_POSITION), uint8(Actions.SETTLE_PAIR));
             params = new bytes[](2);
         }
 
         // hookData empty (no-hook pool assumption)
-        params[0] = abi.encode(
-            getPoolKey(),
-            tickLower,
-            tickUpper,
-            liquidity,
-            amount0Max,
-            amount1Max,
-            address(this),
-            bytes("")
-        );
+        params[0] =
+            abi.encode(getPoolKey(), tickLower, tickUpper, liquidity, amount0Max, amount1Max, address(this), bytes(""));
 
         params[1] = abi.encode(currency0, currency1);
 
@@ -278,18 +262,13 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
         if (useNativeETH) {
             // INCREASE_LIQUIDITY + SETTLE_PAIR + CLEAR_OR_TAKE (refund excess ETH)
             actions = abi.encodePacked(
-                uint8(Actions.INCREASE_LIQUIDITY),
-                uint8(Actions.SETTLE_PAIR),
-                uint8(Actions.CLEAR_OR_TAKE)
+                uint8(Actions.INCREASE_LIQUIDITY), uint8(Actions.SETTLE_PAIR), uint8(Actions.CLEAR_OR_TAKE)
             );
             params = new bytes[](3);
             params[2] = abi.encode(currency0, uint256(0)); // take any excess ETH
         } else {
             // INCREASE_LIQUIDITY + SETTLE_PAIR
-            actions = abi.encodePacked(
-                uint8(Actions.INCREASE_LIQUIDITY),
-                uint8(Actions.SETTLE_PAIR)
-            );
+            actions = abi.encodePacked(uint8(Actions.INCREASE_LIQUIDITY), uint8(Actions.SETTLE_PAIR));
             params = new bytes[](2);
         }
 
@@ -324,12 +303,11 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
 
     /// @notice Collect fees using the "zero-liquidity decrease" pattern.
     /// @dev Allowed even if the position is currently out-of-bound under updated tick range.
-    function collectFeesToVault(
-        uint256 tokenId,
-        uint128 amount0Min,
-        uint128 amount1Min,
-        uint256 deadline
-    ) external onlyAgentActive nonReentrant {
+    function collectFeesToVault(uint256 tokenId, uint128 amount0Min, uint128 amount1Min, uint256 deadline)
+        external
+        onlyAgentActive
+        nonReentrant
+    {
         require(isManagedPosition[tokenId], "unknown tokenId");
 
         // DECREASE_LIQUIDITY (liquidity=0) + TAKE_PAIR
@@ -343,12 +321,11 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
     }
 
     /// @dev Allowed even if the position is currently out-of-bound under updated tick range.
-    function burnPositionToVault(
-        uint256 tokenId,
-        uint128 amount0Min,
-        uint128 amount1Min,
-        uint256 deadline
-    ) external onlyAgentActive nonReentrant {
+    function burnPositionToVault(uint256 tokenId, uint128 amount0Min, uint128 amount1Min, uint256 deadline)
+        external
+        onlyAgentActive
+        nonReentrant
+    {
         _burnPositionToVault(tokenId, amount0Min, amount1Min, deadline);
     }
 
@@ -357,12 +334,12 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
     // =============================================================
 
     /// @notice Swap exact input in this vault's poolKey only (single-hop, exact-in).
-    function swapExactInputSingle(
-        bool zeroForOne,
-        uint128 amountIn,
-        uint128 minAmountOut,
-        uint256 deadline
-    ) external onlyAgentActive nonReentrant returns (uint256 amountOut) {
+    function swapExactInputSingle(bool zeroForOne, uint128 amountIn, uint128 minAmountOut, uint256 deadline)
+        external
+        onlyAgentActive
+        nonReentrant
+        returns (uint256 amountOut)
+    {
         require(swapAllowed, "swap disabled");
 
         Currency inCur = zeroForOne ? currency0 : currency1;
@@ -373,11 +350,8 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
         bytes memory commands = abi.encodePacked(uint8(Commands.V4_SWAP));
 
         // SWAP_EXACT_IN_SINGLE -> SETTLE_ALL -> TAKE_ALL
-        bytes memory actions = abi.encodePacked(
-            uint8(Actions.SWAP_EXACT_IN_SINGLE),
-            uint8(Actions.SETTLE_ALL),
-            uint8(Actions.TAKE_ALL)
-        );
+        bytes memory actions =
+            abi.encodePacked(uint8(Actions.SWAP_EXACT_IN_SINGLE), uint8(Actions.SETTLE_ALL), uint8(Actions.TAKE_ALL));
 
         bytes[] memory params = new bytes[](3);
 
@@ -391,8 +365,8 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
             })
         );
 
-        params[1] = abi.encode(inCur, amountIn);       // settle input
-        params[2] = abi.encode(outCur, minAmountOut);  // take output
+        params[1] = abi.encode(inCur, amountIn); // settle input
+        params[2] = abi.encode(outCur, minAmountOut); // take output
 
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(actions, params);
@@ -497,12 +471,7 @@ contract V4AgenticVault is Ownable, ReentrancyGuard, IERC721Receiver {
     // ERC721 receiver
     // =============================================================
 
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external pure override returns (bytes4) {
+    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
         return IERC721Receiver.onERC721Received.selector;
     }
 }
