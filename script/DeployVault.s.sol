@@ -42,19 +42,27 @@ contract DeployVault is Script {
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerKey);
         address agent = vm.envOr("AGENT_ADDRESS", deployer);
+        address factoryAddr = vm.envOr("FACTORY_ADDRESS", address(0));
 
         console2.log("Deployer:", deployer);
         console2.log("Agent:   ", agent);
 
         vm.startBroadcast(deployerKey);
 
-        // 1. Deploy factory
-        V4AgenticVaultFactory factory = new V4AgenticVaultFactory(
-            POSITION_MANAGER,
-            UNIVERSAL_ROUTER,
-            PERMIT2
-        );
-        console2.log("Factory deployed:", address(factory));
+        // 1. Use existing factory (production-like) or deploy a new one
+        V4AgenticVaultFactory factory;
+        if (factoryAddr == address(0)) {
+            factory = new V4AgenticVaultFactory(
+                POSITION_MANAGER,
+                UNIVERSAL_ROUTER,
+                PERMIT2
+            );
+            factoryAddr = address(factory);
+            console2.log("Factory deployed:", factoryAddr);
+        } else {
+            factory = V4AgenticVaultFactory(factoryAddr);
+            console2.log("Using factory:", factoryAddr);
+        }
 
         // 2. Create vault
         PoolKey memory poolKey = PoolKey({
@@ -65,6 +73,18 @@ contract DeployVault is Script {
             hooks:       IHooks(HOOKS)
         });
 
+        uint256 nextNonce = factory.getNextNonce(deployer);
+        address predicted = factory.computeVaultAddress(
+            deployer,
+            poolKey,
+            nextNonce,
+            agent,
+            ALLOWED_TICK_LOWER,
+            ALLOWED_TICK_UPPER,
+            SWAP_ALLOWED,
+            MAX_POSITIONS_K
+        );
+
         address vaultAddr = factory.createVault(
             poolKey,
             agent,
@@ -73,6 +93,7 @@ contract DeployVault is Script {
             SWAP_ALLOWED,
             MAX_POSITIONS_K
         );
+        require(vaultAddr == predicted, "vault addr mismatch");
         console2.log("Vault deployed:", vaultAddr);
 
         // 3. Fund vault with ETH
@@ -101,7 +122,7 @@ contract DeployVault is Script {
 
         // Summary
         console2.log("\n=== Deployment Summary ===");
-        console2.log("Factory:      ", address(factory));
+        console2.log("Factory:      ", factoryAddr);
         console2.log("Vault:        ", vaultAddr);
         console2.log("Owner:        ", deployer);
         console2.log("Agent:        ", agent);
